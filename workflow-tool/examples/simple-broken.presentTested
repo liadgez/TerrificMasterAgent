@@ -1,0 +1,23 @@
+workflow:
+  name: Simple Broken Workflow
+  version: 1
+  description: A simple workflow with one fixable issue
+steps:
+  - id: step_1
+    name: Check directory that doesn't exist
+    command: ls /fake/directory
+    type: shell
+    expected_output: success
+    depends_on: []
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+metadata:
+  iterations: 2
+  last_updated: 2025-06-27T11:28:57.185Z
+  success_rate: 0
+  status: in_progress
+  verification:
+    verified: false
+    verified_at: null
+    signature: null

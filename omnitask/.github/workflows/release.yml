@@ -1,0 +1,220 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Run security tests
+        run: npm run test:security
+
+      - name: Install Playwright browsers
+        run: npx playwright install
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+  build:
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Verify installation
+        run: npm run verify
+
+      - name: Create release packages
+        run: npm run package:zip
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-packages
+          path: releases/
+          retention-days: 30
+
+  release:
+    needs: build
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-packages
+          path: releases/
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event.inputs.version }}" != "" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: OmniTask v${{ steps.version.outputs.version }}
+          body: |
+            # OmniTask v${{ steps.version.outputs.version }}
+
+            ## 🚀 What's New
+
+            This release includes:
+            - Latest features and improvements
+            - Bug fixes and performance optimizations
+            - Security updates and enhancements
+
+            ## 📦 Installation
+
+            ### Quick Install (macOS)
+            ```bash
+            # Download and extract the package
+            curl -L https://github.com/liadgez/TerrificMasterAgent/releases/download/v${{ steps.version.outputs.version }}/omnitask-v${{ steps.version.outputs.version }}.zip -o omnitask.zip
+            unzip omnitask.zip
+            cd omnitask-v${{ steps.version.outputs.version }}
+            
+            # Run installation
+            chmod +x install.sh
+            ./install.sh
+            ```
+
+            ### NPM Install
+            ```bash
+            npm install -g omnitask@${{ steps.version.outputs.version }}
+            omnitask setup
+            omnitask start
+            ```
+
+            ## 📋 System Requirements
+
+            - macOS 10.15 or later
+            - Node.js 18.0 or later
+            - 8GB RAM (16GB recommended)
+            - 50GB free disk space
+
+            ## 🔒 Security
+
+            All packages include SHA256 checksums. Verify integrity using:
+            ```bash
+            shasum -a 256 -c CHECKSUMS.txt
+            ```
+
+            ## 📖 Documentation
+
+            - [User Guide](https://github.com/liadgez/TerrificMasterAgent/blob/main/docs/USER_GUIDE.md)
+            - [API Reference](https://github.com/liadgez/TerrificMasterAgent/blob/main/docs/API.md)
+            - [Deployment Guide](https://github.com/liadgez/TerrificMasterAgent/blob/main/docs/DEPLOYMENT.md)
+
+            ## 🐛 Issues
+
+            Found a bug? Please report it [here](https://github.com/liadgez/TerrificMasterAgent/issues).
+          files: |
+            releases/*
+          draft: false
+          prerelease: false
+
+  npm-publish:
+    needs: build
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            liadgez/omnitask:latest
+            liadgez/omnitask:${{ steps.version.outputs.version }}
+          platforms: linux/amd64,linux/arm64

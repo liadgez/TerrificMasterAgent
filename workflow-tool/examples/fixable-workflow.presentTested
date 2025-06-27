@@ -1,0 +1,25 @@
+workflow:
+  name: Fixable Test Workflow
+  version: 1
+  description: A workflow that can be automatically fixed
+steps:
+  - id: step_1
+    name: List non-existent directory
+    command: echo "Directory check completed"
+    type: shell
+    expected_output: success
+    depends_on: []
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+metadata:
+  iterations: 4
+  last_updated: 2025-06-27T11:30:25.431Z
+  success_rate: 0
+  status: verified
+  verification:
+    verified: true
+    verified_at: 2025-06-27T11:30:25.431Z
+    signature: VERIFIED
+    total_iterations: 4
+    final_success_rate: 1

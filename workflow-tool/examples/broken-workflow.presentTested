@@ -1,0 +1,50 @@
+workflow:
+  name: Broken Test Workflow
+  version: 1
+  description: A deliberately broken workflow to test improvement system
+steps:
+  - id: step_1
+    name: Try invalid command
+    command: invalidcommand123
+    type: shell
+    expected_output: success
+    depends_on: []
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_2
+    name: Check node version
+    command: node --version
+    type: shell
+    depends_on:
+      - step_1
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_3
+    name: List non-existent directory
+    command: ls /totally/fake/directory
+    type: shell
+    depends_on:
+      - step_2
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_4
+    name: Create and verify file
+    command: echo 'test' > testfile.txt && cat testfile.txt
+    type: shell
+    depends_on:
+      - step_3
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+metadata:
+  iterations: 3
+  last_updated: 2025-06-27T11:28:22.779Z
+  success_rate: 0
+  status: in_progress
+  verification:
+    verified: false
+    verified_at: null
+    signature: null

@@ -1,0 +1,66 @@
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+CHANGELOG.md
+docs/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build artifacts
+.next/
+dist/
+releases/
+
+# Testing
+__tests__/
+coverage/
+.nyc_output/
+
+# Environment
+.env*
+!.env.example
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Cache
+.cache/
+.npm/
+.yarn/
+
+# Temporary
+tmp/
+temp/
+
+# Package files
+*.tgz
+*.tar.gz
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore

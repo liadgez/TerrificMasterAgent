@@ -1,0 +1,62 @@
+workflow:
+  name: Simple Test Workflow
+  version: 1
+  description: A basic workflow to test the system
+steps:
+  - id: step_1
+    name: Check current directory
+    command: pwd
+    type: shell
+    expected_output: success
+    depends_on: []
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_2
+    name: List files
+    command: ls -la
+    type: shell
+    depends_on:
+      - step_1
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_3
+    name: Create test file
+    command: echo 'Hello World' > test.txt
+    type: shell
+    depends_on:
+      - step_2
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_4
+    name: Verify test file
+    command: cat test.txt
+    type: shell
+    expected_output: Hello World
+    depends_on:
+      - step_3
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+  - id: step_5
+    name: Clean up test file
+    command: rm test.txt
+    type: shell
+    depends_on:
+      - step_4
+    timeout: 30000
+    retry_count: 0
+    continue_on_error: false
+metadata:
+  iterations: 0
+  last_updated: 2025-06-27T11:24:32.316Z
+  success_rate: 0
+  status: verified
+  verification:
+    verified: true
+    verified_at: 2025-06-27T11:24:32.316Z
+    signature: VERIFIED
+    total_iterations: 0
+    final_success_rate: 1
